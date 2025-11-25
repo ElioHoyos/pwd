@@ -1,4 +1,4 @@
-# 📢 [Nombre de tu Proyecto]
+# 📢 Página web administrativa para las universidades Winner y Carrion
 
 ![Angular](https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
@@ -81,10 +81,3 @@ Sigue estos pasos para correr el proyecto localmente:
 3. Haz commit de tus cambios (`git commit -m 'Add some AmazingFeature'`).
 4. Haz push a la rama (`git push origin feature/AmazingFeature`).
 5. Abre un Pull Request.
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE.md](LICENSE.md) para detalles.
-
----
-⌨️ con ❤️ por [Tu Nombre]
