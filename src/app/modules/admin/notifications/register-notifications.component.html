@@ -1,0 +1,312 @@
+<div class="flex min-w-0 flex-auto flex-col h-full">
+    <!-- Header -->
+    <div class="flex-auto p-6 sm:p-10 overflow-y-auto">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold tracking-tight">
+                @if (isEditMode) {
+                    Editar Notificación
+                } @else {
+                    Registro de Notificaciones
+                }
+            </h1>
+            <p class="mt-2 text-secondary">
+                @if (isEditMode) {
+                    Modifica los datos de la notificación
+                } @else {
+                    Complete el formulario para registrar una nueva notificación
+                }
+            </p>
+        </div>
+
+        <!-- Alert -->
+        @if (showAlert) {
+            <fuse-alert
+                class="mb-6"
+                [appearance]="'outline'"
+                [type]="alert.type"
+                [@shake]="alert.type === 'error'"
+            >
+                {{ alert.message }}
+            </fuse-alert>
+        }
+
+        <!-- Form Card -->
+        <mat-card class="shadow-lg">
+            <mat-card-content class="p-6 sm:p-8">
+                <form
+                    #notificationNgForm="ngForm"
+                    (ngSubmit)="submitForm()"
+                    class="space-y-6"
+                >
+                    <!-- Title -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Título</mat-label>
+                        <input
+                            id="title"
+                            name="title"
+                            matInput
+                            [(ngModel)]="title"
+                            #titleModel="ngModel"
+                            required
+                            [attr.maxlength]="TITLE_MAX_CHARS"
+                            placeholder="Ingrese el título de la notificación"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-icon matPrefix>title</mat-icon>
+                        <mat-hint align="end">
+                            {{ remainingTitleChars }} caracteres restantes
+                        </mat-hint>
+                        @if (hasFieldError('title', 'required')) {
+                            <mat-error>
+                                El título es requerido
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Title alerts -->
+                    @if (isTitleNearLimit) {
+                        <fuse-alert
+                            class="-mt-4"
+                            [appearance]="'outline'"
+                            [type]="'warning'"
+                        >
+                            Te quedan {{ remainingTitleChars }} caracteres para el título.
+                        </fuse-alert>
+                    }
+                    @if (isTitleAtLimit) {
+                        <fuse-alert
+                            class="-mt-4"
+                            [appearance]="'outline'"
+                            [type]="'error'"
+                        >
+                            Alcanzaste el máximo de {{ TITLE_MAX_CHARS }} caracteres para el título.
+                        </fuse-alert>
+                    }
+
+                    <!-- Description -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Descripción</mat-label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            matInput
+                            [(ngModel)]="description"
+                            #descriptionModel="ngModel"
+                            required
+                            [attr.maxlength]="DESCRIPTION_MAX_CHARS"
+                            placeholder="Ingrese la descripción de la notificación"
+                            rows="4"
+                            [disabled]="isSubmitting"
+                        ></textarea>
+                        <mat-icon matPrefix>description</mat-icon>
+                        <mat-hint align="end">
+                            {{ remainingDescriptionChars }} caracteres restantes
+                        </mat-hint>
+                        @if (hasFieldError('description', 'required')) {
+                            <mat-error>
+                                La descripción es requerida
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Institution -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Institución</mat-label>
+                        <mat-select
+                            name="institution"
+                            [(ngModel)]="institution"
+                            #institutionModel="ngModel"
+                            required
+                            [disabled]="isSubmitting"
+                        >
+                            @for (option of institutionOptions; track option.value) {
+                                <mat-option [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        <mat-icon matPrefix>school</mat-icon>
+                        @if (hasFieldError('institution', 'required')) {
+                            <mat-error>La institución es requerida</mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Status -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Estado</mat-label>
+                        <mat-select
+                            name="statusId"
+                            [(ngModel)]="statusId"
+                            #statusModel="ngModel"
+                            required
+                            [disabled]="isSubmitting"
+                        >
+                            @for (option of statusOptions; track option.value) {
+                                <mat-option [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        <mat-icon matPrefix>flag</mat-icon>
+                        @if (hasFieldError('statusId', 'required')) {
+                            <mat-error>El estado es requerido</mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Excel File Upload -->
+                    <div class="w-full">
+                        <div class="mb-2 text-sm font-medium">Archivo Excel</div>
+                        @if (excelFileAlert) {
+                            <fuse-alert
+                                class="mb-3"
+                                [appearance]="'outline'"
+                                [type]="excelFileAlert.type"
+                            >
+                                {{ excelFileAlert.message }}
+                            </fuse-alert>
+                        }
+                        <div
+                            class="rounded-xl border-2 border-dashed p-6 text-center bg-gray-50 dark:bg-default-700"
+                        >
+                            @if (excelFile) {
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <mat-icon class="text-green-500 mr-2">description</mat-icon>
+                                        <span class="font-medium">{{ excelFile.name }}</span>
+                                    </div>
+                                    <button
+                                        mat-icon-button
+                                        type="button"
+                                        (click)="removeExcelFile()"
+                                        [disabled]="isSubmitting"
+                                    >
+                                        <mat-icon>delete</mat-icon>
+                                    </button>
+                                </div>
+                            } @else {
+                                <div>
+                                    <button
+                                        mat-stroked-button
+                                        type="button"
+                                        (click)="excelFileInput.click()"
+                                        [disabled]="isSubmitting"
+                                    >
+                                        Seleccionar archivo Excel
+                                    </button>
+                                    <input
+                                        #excelFileInput
+                                        type="file"
+                                        class="hidden"
+                                        accept=".xlsx,.xls,.csv"
+                                        (change)="onExcelFileSelected($event.target.files)"
+                                    />
+                                    <div class="mt-2 text-secondary text-sm">
+                                        Seleccione un archivo Excel (.xlsx, .xls) o CSV (.csv). Máximo 5MB.
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Image URL -->
+                    <mat-form-field class="w-full">
+                        <mat-label>URL de Imagen</mat-label>
+                        <input
+                            id="imagenUrl"
+                            name="imagenUrl"
+                            matInput
+                            [(ngModel)]="imagenUrl"
+                            [attr.maxlength]="URL_MAX_CHARS"
+                            placeholder="https://ejemplo.com/imagen.jpg"
+                            type="url"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-icon matPrefix>image</mat-icon>
+                    </mat-form-field>
+
+                    <!-- Image URL (Firestore) -->
+                    <mat-form-field class="w-full">
+                        <mat-label>URL de Imagen (Firestore)</mat-label>
+                        <input
+                            id="imageUrl"
+                            name="imageUrl"
+                            matInput
+                            [(ngModel)]="imageUrl"
+                            [attr.maxlength]="URL_MAX_CHARS"
+                            placeholder="https://firestore.com/imagen.jpg"
+                            type="url"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-icon matPrefix>cloud_upload</mat-icon>
+                    </mat-form-field>
+
+                    <!-- Deep Link -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Deep Link</mat-label>
+                        <input
+                            id="deepLink"
+                            name="deepLink"
+                            matInput
+                            [(ngModel)]="deepLink"
+                            [attr.maxlength]="URL_MAX_CHARS"
+                            placeholder="app://deep-link/path"
+                            type="url"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-icon matPrefix>link</mat-icon>
+                    </mat-form-field>
+
+                    <!-- Notification HTML -->
+                    <div class="w-full">
+                        <div class="mb-2 text-sm font-medium">Contenido HTML de la Notificación</div>
+                        <div class="mb-2 text-xs text-secondary">
+                            Contenido HTML del template que se deberá usar. Máximo {{ HTML_MAX_CHARS }} caracteres.
+                        </div>
+                        <quill-editor
+                            [(ngModel)]="notificationHtml"
+                            name="notificationHtml"
+                            [modules]="quillModules"
+                            [bounds]="'self'"
+                            [disabled]="isSubmitting"
+                            class="bg-white dark:bg-gray-800 w-full"
+                        ></quill-editor>
+                        <div class="mt-2 text-xs text-secondary text-right">
+                            {{ remainingHtmlChars }} caracteres restantes
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button
+                            mat-stroked-button
+                            type="button"
+                            (click)="resetForm()"
+                            [disabled]="isSubmitting"
+                        >
+                            Limpiar
+                        </button>
+                        <button
+                            mat-flat-button
+                            type="submit"
+                            [color]="'primary'"
+                            [disabled]="isSubmitting || !isFormValid()"
+                        >
+                            @if (isSubmitting) {
+                                <mat-spinner
+                                    diameter="20"
+                                    class="inline-block mr-2"
+                                ></mat-spinner>
+                            }
+                            @if (isEditMode) {
+                                Guardar Cambios
+                            } @else {
+                                Registrar Notificación
+                            }
+                        </button>
+                    </div>
+                </form>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>
+

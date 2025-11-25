@@ -1,0 +1,166 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
+    <mat-drawer-container
+        class="bg-card h-full flex-auto dark:bg-transparent"
+        (backdropClick)="onBackdropClicked()"
+    >
+        <!-- Drawer -->
+        <mat-drawer
+            class="w-full dark:bg-gray-900 md:w-160"
+            [mode]="drawerMode"
+            [opened]="false"
+            [position]="'end'"
+            [disableClose]="true"
+            #matDrawer
+        >
+            <router-outlet></router-outlet>
+        </mat-drawer>
+
+        <mat-drawer-content class="flex flex-col">
+            <!-- Main -->
+            <div class="flex-auto">
+                <!-- Header -->
+                <div
+                    class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex-col md:px-8"
+                >
+                    <!-- Title -->
+                    <div>
+                        <div
+                            class="text-4xl font-extrabold leading-none tracking-tight"
+                        >
+                            Noticias
+                        </div>
+                        <div class="text-secondary ml-0.5 font-medium">
+                            @if (newsCount > 0) {
+                                {{ newsCount }}
+                            }
+                            {{
+                                newsCount
+                                    | i18nPlural
+                                        : {
+                                              '=0': 'No hay noticias',
+                                              '=1': 'noticia',
+                                              other: 'noticias',
+                                          }
+                            }}
+                        </div>
+                    </div>
+
+                    <!-- Main actions -->
+                    <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+                        <!-- Search -->
+                        <div class="flex-auto">
+                            <mat-form-field
+                                class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
+                                subscriptSizing="dynamic"
+                            >
+                                <mat-icon
+                                    class="icon-size-5"
+                                    matPrefix
+                                    [svgIcon]="
+                                        'heroicons_solid:magnifying-glass'
+                                    "
+                                ></mat-icon>
+                                <input
+                                    matInput
+                                    [formControl]="searchInputControl"
+                                    [autocomplete]="'off'"
+                                    [placeholder]="'Buscar noticias'"
+                                />
+                            </mat-form-field>
+                        </div>
+                        <!-- Add news button -->
+                        <button
+                            class="ml-4"
+                            mat-flat-button
+                            [color]="'primary'"
+                            (click)="createNews()"
+                        >
+                            <mat-icon
+                                [svgIcon]="'heroicons_outline:plus'"
+                            ></mat-icon>
+                            <span class="ml-2 mr-1">Agregar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- News list -->
+                <div class="relative">
+                    @if (news$ | async; as news) {
+                        @if (news.length) {
+                            @for (
+                                newsItem of news;
+                                track trackByFn(i, newsItem);
+                                let i = $index
+                            ) {
+                                <!-- Group -->
+                                @if (
+                                    i === 0 ||
+                                    newsItem.title.charAt(0) !==
+                                        news[i - 1].title.charAt(0)
+                                ) {
+                                    <div
+                                        class="text-secondary sticky top-0 z-10 -mt-px border-b border-t bg-gray-50 px-6 py-1 font-medium uppercase dark:bg-gray-900 md:px-8"
+                                    >
+                                        {{ newsItem.title.charAt(0) }}
+                                    </div>
+                                }
+                                <!-- News -->
+                                <a
+                                    class="z-20 flex cursor-pointer items-center border-b px-6 py-4 md:px-8"
+                                    [ngClass]="{
+                                        'dark:hover:bg-hover hover:bg-gray-100':
+                                            !selectedNews ||
+                                            selectedNews.id !== newsItem.id,
+                                        'bg-primary-50 dark:bg-hover':
+                                            selectedNews &&
+                                            selectedNews.id === newsItem.id,
+                                    }"
+                                    [routerLink]="['./', newsItem.id]"
+                                >
+                                    <div
+                                        class="flex h-10 w-10 flex-0 items-center justify-center overflow-hidden rounded-full"
+                                    >
+                                        @if (getNewsImageUrl(newsItem)) {
+                                            <img
+                                                class="h-full w-full object-cover"
+                                                [src]="getNewsImageUrl(newsItem)"
+                                                alt="News image"
+                                            />
+                                        }
+                                        @if (!getNewsImageUrl(newsItem)) {
+                                            <div
+                                                class="flex h-full w-full items-center justify-center rounded-full bg-gray-200 text-lg uppercase text-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                            >
+                                                {{ getInitials(newsItem.title) }}
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="ml-4 min-w-0">
+                                        <div
+                                            class="truncate font-medium leading-5"
+                                        >
+                                            {{ newsItem.title }}
+                                        </div>
+                                        <div
+                                            class="text-secondary truncate leading-5"
+                                        >
+                                            {{ getCategoryLabel(newsItem.category) }}
+                                        </div>
+                                    </div>
+                                </a>
+                            }
+                        } @else {
+                            <div
+                                class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16"
+                            >
+                                No hay noticias!
+                            </div>
+                        }
+                    }
+
+                    <!-- No news -->
+                </div>
+            </div>
+        </mat-drawer-content>
+    </mat-drawer-container>
+</div>

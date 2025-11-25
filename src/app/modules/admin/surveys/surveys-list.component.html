@@ -1,0 +1,189 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
+    <mat-drawer-container
+        class="bg-card h-full flex-auto dark:bg-transparent"
+        (backdropClick)="onBackdropClicked()"
+    >
+        <!-- Drawer -->
+        <mat-drawer
+            class="w-full dark:bg-gray-900 md:w-160"
+            [mode]="drawerMode"
+            [opened]="false"
+            [position]="'end'"
+            [disableClose]="true"
+            #matDrawer
+        >
+            <router-outlet></router-outlet>
+        </mat-drawer>
+
+        <mat-drawer-content class="flex flex-col">
+            <!-- Main -->
+            <div class="flex-auto">
+                <!-- Header -->
+                <div
+                    class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex-col md:px-8"
+                >
+                    <!-- Title -->
+                    <div>
+                        <div
+                            class="text-4xl font-extrabold leading-none tracking-tight"
+                        >
+                            Encuestas
+                        </div>
+                        <div class="text-secondary ml-0.5 font-medium">
+                            @if (surveysCount > 0) {
+                                {{ surveysCount }}
+                            }
+                            {{
+                                surveysCount
+                                    | i18nPlural
+                                        : {
+                                              '=0': 'No hay encuestas',
+                                              '=1': 'encuesta',
+                                              other: 'encuestas',
+                                          }
+                            }}
+                        </div>
+                    </div>
+
+                    <!-- Main actions -->
+                    <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+                        <!-- Search -->
+                        <div class="flex-auto">
+                            <mat-form-field
+                                class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
+                                subscriptSizing="dynamic"
+                            >
+                                <mat-icon
+                                    class="icon-size-5"
+                                    matPrefix
+                                    [svgIcon]="
+                                        'heroicons_solid:magnifying-glass'
+                                    "
+                                ></mat-icon>
+                                <input
+                                    matInput
+                                    [formControl]="searchInputControl"
+                                    [autocomplete]="'off'"
+                                    [placeholder]="'Buscar encuestas'"
+                                />
+                            </mat-form-field>
+                        </div>
+                        <!-- Add survey button -->
+                        <button
+                            class="ml-4"
+                            mat-flat-button
+                            [color]="'primary'"
+                            (click)="createSurvey()"
+                        >
+                            <mat-icon
+                                [svgIcon]="'heroicons_outline:plus'"
+                            ></mat-icon>
+                            <span class="ml-2 mr-1">Agregar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Surveys list -->
+                <div class="relative">
+                    @if (surveys$ | async; as surveys) {
+                        @if (surveys.length) {
+                            @for (
+                                survey of surveys;
+                                track trackByFn($index, survey);
+                                let i = $index
+                            ) {
+                                <!-- Group -->
+                                @if (
+                                    i === 0 ||
+                                    survey.title.charAt(0) !==
+                                        surveys[i - 1].title.charAt(0)
+                                ) {
+                                    <div
+                                        class="text-secondary sticky top-0 z-10 -mt-px border-b border-t bg-gray-50 px-6 py-1 font-medium uppercase dark:bg-gray-900 md:px-8"
+                                    >
+                                        {{ survey.title.charAt(0) }}
+                                    </div>
+                                }
+                                <!-- Survey -->
+                                <div
+                                    class="z-20 flex cursor-pointer items-center border-b px-6 py-4 md:px-8 group"
+                                    [ngClass]="{
+                                        'dark:hover:bg-hover hover:bg-gray-100':
+                                            !selectedSurvey ||
+                                            selectedSurvey.id !== survey.id,
+                                        'bg-primary-50 dark:bg-hover':
+                                            selectedSurvey &&
+                                            selectedSurvey.id === survey.id,
+                                    }"
+                                >
+                                    <a
+                                        class="flex flex-1 items-center min-w-0"
+                                        [routerLink]="['./', survey.id]"
+                                    >
+                                        <div
+                                            class="flex h-10 w-10 flex-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-lg uppercase text-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                        >
+                                            {{ survey.title.charAt(0) }}
+                                        </div>
+                                        <div class="ml-4 min-w-0 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <div
+                                                    class="truncate font-medium leading-5 flex-1"
+                                                >
+                                                    {{ survey.title }}
+                                                </div>
+                                                @if (survey.surveysMandatory) {
+                                                    <mat-icon
+                                                        class="icon-size-5 text-warn"
+                                                        [svgIcon]="'heroicons_solid:exclamation-triangle'"
+                                                        [matTooltip]="'Encuesta obligatoria'"
+                                                    ></mat-icon>
+                                                }
+                                            </div>
+                                            <div
+                                                class="text-secondary text-sm leading-5 space-y-1"
+                                            >
+                                                <div>
+                                                    {{ getInstitutionLabel(survey.institution) }} • {{ getStatusLabel(survey.statusId) }}
+                                                </div>
+                                                @if (survey.surveyDeadline) {
+                                                    <div class="text-xs">
+                                                        Fecha límite: {{ formatDate(survey.surveyDeadline) }}
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </a>
+                                    <button
+                                        mat-icon-button
+                                        type="button"
+                                        class="opacity-0 group-hover:opacity-100 transition-opacity"
+                                        [matMenuTriggerFor]="menu"
+                                        (click)="$event.preventDefault(); $event.stopPropagation()"
+                                    >
+                                        <mat-icon [svgIcon]="'heroicons_outline:ellipsis-vertical'"></mat-icon>
+                                    </button>
+                                    <mat-menu #menu="matMenu">
+                                        <button mat-menu-item (click)="deleteSurvey($event, survey)">
+                                            <mat-icon [svgIcon]="'heroicons_outline:trash'"></mat-icon>
+                                            <span>Eliminar</span>
+                                        </button>
+                                    </mat-menu>
+                                </div>
+                            }
+                        } @else {
+                            <div
+                                class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16"
+                            >
+                                No hay encuestas!
+                            </div>
+                        }
+                    }
+
+                    <!-- No surveys -->
+                </div>
+            </div>
+        </mat-drawer-content>
+    </mat-drawer-container>
+</div>
+

@@ -1,0 +1,25 @@
+// Estilos específicos para el componente de registro de notificaciones
+
+// Editor Quill más grande y ancho completo
+quill-editor {
+    display: block;
+    width: 100% !important;
+
+    ::ng-deep .ql-container {
+        min-height: 350px !important;
+        max-height: 700px !important;
+        width: 100% !important;
+    }
+
+    ::ng-deep .ql-toolbar {
+        width: 100% !important;
+    }
+
+    ::ng-deep .ql-editor {
+        min-height: 350px !important;
+        font-size: 15px;
+        line-height: 1.6;
+        width: 100% !important;
+    }
+}
+

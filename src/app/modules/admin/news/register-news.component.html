@@ -1,0 +1,521 @@
+<div class="flex min-w-0 flex-auto flex-col h-full">
+    <!-- Header -->
+    <div class="flex-auto p-6 sm:p-10 overflow-y-auto">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold tracking-tight">
+                @if (isEditMode) {
+                    Editar Noticia
+                } @else {
+                    Registro de Noticias
+                }
+            </h1>
+            <p class="mt-2 text-secondary">
+                @if (isEditMode) {
+                    Modifica los datos de la noticia
+                } @else {
+                    Complete el formulario para registrar una nueva noticia
+                }
+            </p>
+        </div>
+
+        <!-- Alert -->
+        @if (showAlert) {
+            <fuse-alert
+                class="mb-6"
+                [appearance]="'outline'"
+                [type]="alert.type"
+                [@shake]="alert.type === 'error'"
+            >
+                {{ alert.message }}
+            </fuse-alert>
+        }
+
+        <!-- Form Card -->
+        <mat-card class="shadow-lg">
+            <mat-card-content class="p-6 sm:p-8">
+                <form
+                    #newsNgForm="ngForm"
+                    (ngSubmit)="submitForm()"
+                    class="space-y-6"
+                >
+                    <!-- Title -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Título de la noticia</mat-label>
+                        <input
+                            id="title"
+                            name="title"
+                            matInput
+                            [(ngModel)]="title"
+                            #titleModel="ngModel"
+                            required
+                            [attr.maxlength]="TITLE_MAX_CHARS"
+                            placeholder="Ingrese el título de la noticia"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-icon matPrefix>newspaper</mat-icon>
+                        <mat-hint align="end">
+                            {{ remainingTitleChars }} caracteres restantes
+                        </mat-hint>
+                        @if (hasFieldError('title', 'required')) {
+                            <mat-error>
+                                El título de la noticia es requerido
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Title alerts -->
+                    @if (isTitleNearLimit) {
+                        <fuse-alert
+                            class="-mt-4"
+                            [appearance]="'outline'"
+                            [type]="'warning'"
+                        >
+                            Te quedan {{ remainingTitleChars }} caracteres para el título.
+                        </fuse-alert>
+                    }
+                    @if (isTitleAtLimit) {
+                        <fuse-alert
+                            class="-mt-4"
+                            [appearance]="'outline'"
+                            [type]="'error'"
+                        >
+                            Alcanzaste el máximo de {{ TITLE_MAX_CHARS }} caracteres para el título.
+                        </fuse-alert>
+                    }
+
+                    <!-- Description -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Descripción de la noticia</mat-label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            matInput
+                            [(ngModel)]="description"
+                            #descriptionModel="ngModel"
+                            required
+                            [attr.maxlength]="DESCRIPTION_MAX_CHARS"
+                            placeholder="Ingrese la descripción de la noticia"
+                            rows="4"
+                            [disabled]="isSubmitting"
+                        ></textarea>
+                        <mat-icon matPrefix>description</mat-icon>
+                        <mat-hint align="end">
+                            {{ remainingDescriptionChars }} caracteres restantes
+                        </mat-hint>
+                        @if (hasFieldError('description', 'required')) {
+                            <mat-error>
+                                La descripción de la noticia es requerida
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Has Detail View Toggle (estilo Settings) -->
+                    <div class="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3 dark:bg-default-700">
+                        <div class="mr-4">
+                            <div class="font-medium leading-6">Tiene vista de detalle</div>
+                            <div class="text-secondary text-sm">Actívalo para capturar descripción larga y link de registro.</div>
+                        </div>
+                        <mat-slide-toggle
+                            name="hasDetailView"
+                            [(ngModel)]="hasDetailView"
+                            (ngModelChange)="onHasDetailViewChange()"
+                            [disabled]="isSubmitting"
+                            color="primary"
+                            aria-label="Tiene vista de detalle"
+                        >
+                        </mat-slide-toggle>
+                    </div>
+
+                    <!-- Large Description (conditional) -->
+                    @if (isDetailViewEnabled) {
+                        <mat-form-field class="w-full">
+                            <mat-label
+                                >Descripción larga para mostrar en el
+                                detalle</mat-label
+                            >
+                            <textarea
+                                id="largeDescription"
+                                name="largeDescription"
+                                matInput
+                                [(ngModel)]="largeDescription"
+                                #largeDescriptionModel="ngModel"
+                                required
+                                [attr.maxlength]="LARGE_DESCRIPTION_MAX_CHARS"
+                                placeholder="Ingrese la descripción larga de la noticia"
+                                rows="6"
+                                [disabled]="isSubmitting"
+                            ></textarea>
+                            <mat-icon matPrefix>article</mat-icon>
+                            <mat-hint align="end">
+                                {{ remainingLargeDescriptionChars }} caracteres restantes
+                            </mat-hint>
+                            @if (
+                                hasDetailView &&
+                                (!largeDescription || largeDescription.trim() === '') &&
+                                (largeDescriptionModel.dirty || largeDescriptionModel.touched)
+                            ) {
+                                <mat-error>
+                                    La descripción larga es requerida
+                                </mat-error>
+                            }
+                        </mat-form-field>
+
+                        <!-- Registration Link (conditional) -->
+                        <mat-form-field class="w-full">
+                            <mat-label>Link de registro</mat-label>
+                            <input
+                                id="registrationLink"
+                                name="registrationLink"
+                                matInput
+                                [(ngModel)]="registrationLink"
+                                #registrationLinkModel="ngModel"
+                                required
+                                placeholder="https://ejemplo.com/registro"
+                                type="url"
+                                [disabled]="isSubmitting"
+                            />
+                            <mat-icon matPrefix>link</mat-icon>
+                            @if (
+                                hasDetailView &&
+                                (!registrationLink || registrationLink.trim() === '') &&
+                                (registrationLinkModel.dirty || registrationLinkModel.touched)
+                            ) {
+                                <mat-error>
+                                    El link de registro es requerido
+                                </mat-error>
+                            }
+                        </mat-form-field>
+                    }
+
+                    <!-- Images uploader -->
+                    <div class="mt-6">
+                        @if (imagesAlert) {
+                            <fuse-alert class="mb-3" [appearance]="'outline'" [type]="imagesAlert.type">
+                                {{ imagesAlert.message }}
+                            </fuse-alert>
+                        }
+                        <div
+                            class="rounded-xl border-2 border-dashed p-6 text-center bg-gray-50 dark:bg-default-700"
+                            [class.border-primary]="isDragOver"
+                            (drop)="onDropZoneDrop($event)"
+                            (dragover)="onDropZoneOver($event)"
+                            (dragleave)="onDropZoneLeave($event)"
+                        >
+                            <div class="mb-2 font-medium">Imágenes ({{ images.length }}/{{ IMAGES_MAX }})</div>
+                            <button
+                                mat-stroked-button
+                                type="button"
+                                (click)="fileInput.click()"
+                                [disabled]="isSubmitting || images.length >= IMAGES_MAX"
+                            >
+                                Seleccionar imágenes
+                            </button>
+                            <input
+                                #fileInput
+                                type="file"
+                                class="hidden"
+                                accept=".jpg,.jpeg,.png,.webp"
+                                multiple
+                                (change)="onFilesSelected($event.target.files)"
+                            />
+                            <div class="mt-2 text-secondary text-sm">
+                                Arrastra y suelta aquí o selecciona desde tu dispositivo. Máximo {{ IMAGES_MAX }} imágenes.
+                            </div>
+                        </div>
+
+                        <!-- Images preview grid -->
+                        @if (images.length > 0) {
+                            <div
+                                cdkDropList
+                                class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"
+                                (cdkDropListDropped)="drop($event)"
+                            >
+                                @for (img of images; track img.id; let i = $index) {
+                                    <div
+                                        class="relative group image-preview-item"
+                                        cdkDrag
+                                    >
+                                        <!-- Preview container -->
+                                        <div class="relative w-full aspect-square rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 shadow-sm hover:shadow-lg hover:border-primary transition-all duration-200 cursor-default">
+                                            <!-- Preview image -->
+                                            <img
+                                                [src]="img.previewUrl"
+                                                class="w-full h-full object-cover"
+                                                [alt]="'Imagen ' + (i + 1)"
+                                                loading="lazy"
+                                            />
+
+                                            <!-- Overlay on hover -->
+                                            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-200"></div>
+
+                                            <!-- Number badge with drag indicator -->
+                                            <div class="absolute top-2 left-2 flex items-center gap-1.5 z-20">
+                                                <div class="rounded-full bg-primary text-white text-xs font-semibold px-2.5 py-1 shadow-lg">
+                                                    {{ i + 1 }}
+                                                </div>
+                                                <!-- Drag indicator icon - always visible -->
+                                                <button
+                                                    type="button"
+                                                    mat-icon-button
+                                                    class="!w-8 !h-8 !min-w-8 bg-primary/90 hover:bg-primary text-white shadow-lg rounded-full cursor-grab active:cursor-grabbing"
+                                                    cdkDragHandle
+                                                    (mousedown)="$event.stopPropagation()"
+                                                    aria-label="Arrastrar para reordenar"
+                                                    title="Arrastrar para reordenar"
+                                                >
+                                                    <mat-icon class="!text-base">drag_indicator</mat-icon>
+                                                </button>
+                                            </div>
+
+                                            <!-- Remove button - always visible in top right -->
+                                            <button
+                                                type="button"
+                                                mat-icon-button
+                                                color="warn"
+                                                class="absolute top-2 right-2 !w-9 !h-9 !min-w-9 bg-red-500 hover:bg-red-600 text-white shadow-lg rounded-full z-30 opacity-90 hover:opacity-100 transition-opacity cursor-pointer"
+                                                (click)="removeImage(img.id); $event.stopPropagation()"
+                                                (mousedown)="$event.stopPropagation()"
+                                                aria-label="Eliminar imagen"
+                                                title="Eliminar imagen"
+                                            >
+                                                <mat-icon class="!text-lg">delete</mat-icon>
+                                            </button>
+
+                                            <!-- Action buttons (shown on hover) -->
+                                            <div class="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 pointer-events-none">
+                                                <!-- Move left button -->
+                                                <button
+                                                    type="button"
+                                                    mat-mini-fab
+                                                    color="accent"
+                                                    class="shadow-lg pointer-events-auto cursor-pointer"
+                                                    (click)="moveImage(i, -1); $event.stopPropagation()"
+                                                    (mousedown)="$event.stopPropagation()"
+                                                    [disabled]="i === 0"
+                                                    aria-label="Mover a la izquierda"
+                                                    title="Mover a la izquierda"
+                                                >
+                                                    <mat-icon>chevron_left</mat-icon>
+                                                </button>
+
+                                                <!-- Move right button -->
+                                                <button
+                                                    type="button"
+                                                    mat-mini-fab
+                                                    color="accent"
+                                                    class="shadow-lg pointer-events-auto cursor-pointer"
+                                                    (click)="moveImage(i, 1); $event.stopPropagation()"
+                                                    (mousedown)="$event.stopPropagation()"
+                                                    [disabled]="i === images.length - 1"
+                                                    aria-label="Mover a la derecha"
+                                                    title="Mover a la derecha"
+                                                >
+                                                    <mat-icon>chevron_right</mat-icon>
+                                                </button>
+                                            </div>
+
+                                            <!-- Drag hint overlay -->
+                                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
+                                                <p class="text-white text-xs text-center font-medium">
+                                                    Arrastra para reordenar
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Code -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Institución</mat-label>
+                        <mat-select
+                            name="code"
+                            [(ngModel)]="code"
+                            #codeModel="ngModel"
+                            required
+                            [disabled]="isSubmitting"
+                        >
+                            @for (option of codeOptions; track option.value) {
+                                <mat-option [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        <mat-icon matPrefix>school</mat-icon>
+                        @if (hasFieldError('code', 'required')) {
+                            <mat-error>La institución es requerida</mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Category -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Categoría</mat-label>
+                        <mat-select
+                            name="category"
+                            [(ngModel)]="category"
+                            #categoryModel="ngModel"
+                            required
+                            (ngModelChange)="onCategoryChange()"
+                            [disabled]="isSubmitting"
+                        >
+                            @for (
+                                option of categoryOptions;
+                                track option.value
+                            ) {
+                                <mat-option [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        <mat-icon matPrefix>category</mat-icon>
+                        @if (hasFieldError('category', 'required')) {
+                            <mat-error>
+                                La categoría es requerida
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Date -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Fecha</mat-label>
+                        <input
+                            name="date"
+                            matInput
+                            [matDatepicker]="picker"
+                            [(ngModel)]="date"
+                            #dateModel="ngModel"
+                            required
+                            placeholder="Seleccione la fecha"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-datepicker-toggle
+                            matIconSuffix
+                            [for]="picker"
+                            [disabled]="isSubmitting"
+                        ></mat-datepicker-toggle>
+                        <mat-datepicker #picker></mat-datepicker>
+                        <mat-icon matPrefix>calendar_today</mat-icon>
+                        @if (hasFieldError('date', 'required')) {
+                            <mat-error>La fecha es requerida</mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Time (conditional - NO se requiere si es Taller) -->
+                    @if (isTimeRequired) {
+                        <div class="w-full">
+                            <news-time-picker
+                                [(ngModel)]="time"
+                                name="time"
+                                #timeModel="ngModel"
+                                [required]="shouldValidateTime"
+                                [disabled]="isSubmitting"
+                            ></news-time-picker>
+                            @if (
+                                shouldValidateTime &&
+                                !time &&
+                                (timeModel.dirty || timeModel.touched)
+                            ) {
+                                <mat-error class="mt-1 block">
+                                    La hora es requerida
+                                </mat-error>
+                            }
+                        </div>
+                    }
+                    @if (!isTimeRequired && category === 3) {
+                        <!-- Mensaje informativo cuando es Taller -->
+                        <div class="flex items-center text-sm text-secondary italic mt-2">
+                            <mat-icon class="mr-2 text-secondary" style="font-size: 18px; width: 18px; height: 18px;">info</mat-icon>
+                            La hora no es requerida para la categoría Taller
+                        </div>
+                    }
+
+                    <!-- Action -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Acción</mat-label>
+                        <mat-select
+                            name="action"
+                            [(ngModel)]="action"
+                            #actionModel="ngModel"
+                            required
+                            (ngModelChange)="onActionChange()"
+                            [disabled]="isSubmitting"
+                        >
+                            @for (
+                                option of actionOptions;
+                                track option.value
+                            ) {
+                                <mat-option [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        <mat-icon matPrefix>settings</mat-icon>
+                        @if (hasFieldError('action', 'required')) {
+                            <mat-error>La acción es requerida</mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Action URL (conditional) -->
+                    @if (isActionUrlRequired) {
+                        <mat-form-field class="w-full">
+                            <mat-label>URL de acción</mat-label>
+                            <input
+                                id="actionUrl"
+                                name="actionUrl"
+                                matInput
+                                [(ngModel)]="actionUrl"
+                                #actionUrlModel="ngModel"
+                                required
+                                placeholder="https://ejemplo.com"
+                                type="url"
+                                [disabled]="isSubmitting"
+                            />
+                            <mat-icon matPrefix>open_in_new</mat-icon>
+                            @if (
+                                action === 2 &&
+                                (!actionUrl || actionUrl.trim() === '') &&
+                                (actionUrlModel.dirty || actionUrlModel.touched)
+                            ) {
+                                <mat-error>
+                                    La URL de acción es requerida
+                                </mat-error>
+                            }
+                        </mat-form-field>
+                    }
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button
+                            mat-stroked-button
+                            type="button"
+                            (click)="resetForm()"
+                            [disabled]="isSubmitting"
+                        >
+                            Limpiar
+                        </button>
+                        <button
+                            mat-flat-button
+                            type="submit"
+                            [color]="'primary'"
+                            [disabled]="isSubmitting"
+                        >
+                            @if (isSubmitting) {
+                                <mat-spinner
+                                    diameter="20"
+                                    class="mr-2"
+                                ></mat-spinner>
+                            }
+                            @if (isEditMode) {
+                                Guardar Cambios
+                            } @else {
+                                Registrar Noticia
+                            }
+                        </button>
+                    </div>
+                </form>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>

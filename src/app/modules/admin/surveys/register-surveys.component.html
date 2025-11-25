@@ -1,0 +1,281 @@
+<div class="flex min-w-0 flex-auto flex-col h-full">
+    <!-- Header -->
+    <div class="flex-auto p-6 sm:p-10 overflow-y-auto">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold tracking-tight">
+                @if (isEditMode) {
+                    Editar Encuesta
+                } @else {
+                    Registro de Encuestas
+                }
+            </h1>
+            <p class="mt-2 text-secondary">
+                @if (isEditMode) {
+                    Modifica los datos de la encuesta
+                } @else {
+                    Complete el formulario para registrar una nueva encuesta
+                }
+            </p>
+        </div>
+
+        <!-- Alert -->
+        @if (showAlert) {
+            <fuse-alert
+                class="mb-6"
+                [appearance]="'outline'"
+                [type]="alert.type"
+                [@shake]="alert.type === 'error'"
+            >
+                {{ alert.message }}
+            </fuse-alert>
+        }
+
+        <!-- Form Card -->
+        <mat-card class="shadow-lg">
+            <mat-card-content class="p-6 sm:p-8">
+                <form
+                    #surveyNgForm="ngForm"
+                    (ngSubmit)="submitForm()"
+                    class="space-y-6"
+                >
+                    <!-- Title -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Título</mat-label>
+                        <input
+                            id="title"
+                            name="title"
+                            matInput
+                            [(ngModel)]="title"
+                            #titleModel="ngModel"
+                            required
+                            [attr.maxlength]="TITLE_MAX_CHARS"
+                            placeholder="Ingrese el título de la encuesta"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-icon matPrefix>title</mat-icon>
+                        <mat-hint align="end">
+                            {{ remainingTitleChars }} caracteres restantes
+                        </mat-hint>
+                        @if (hasFieldError('title', 'required')) {
+                            <mat-error>
+                                El título es requerido
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Title alerts -->
+                    @if (isTitleNearLimit) {
+                        <fuse-alert
+                            class="-mt-4"
+                            [appearance]="'outline'"
+                            [type]="'warning'"
+                        >
+                            Te quedan {{ remainingTitleChars }} caracteres para el título.
+                        </fuse-alert>
+                    }
+                    @if (isTitleAtLimit) {
+                        <fuse-alert
+                            class="-mt-4"
+                            [appearance]="'outline'"
+                            [type]="'error'"
+                        >
+                            Alcanzaste el máximo de {{ TITLE_MAX_CHARS }} caracteres para el título.
+                        </fuse-alert>
+                    }
+
+                    <!-- Description -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Descripción</mat-label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            matInput
+                            [(ngModel)]="description"
+                            #descriptionModel="ngModel"
+                            required
+                            [attr.maxlength]="DESCRIPTION_MAX_CHARS"
+                            placeholder="Ingrese la descripción de la encuesta"
+                            rows="4"
+                            [disabled]="isSubmitting"
+                        ></textarea>
+                        <mat-icon matPrefix>description</mat-icon>
+                        <mat-hint align="end">
+                            {{ remainingDescriptionChars }} caracteres restantes
+                        </mat-hint>
+                        @if (hasFieldError('description', 'required')) {
+                            <mat-error>
+                                La descripción es requerida
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Institution -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Institución</mat-label>
+                        <mat-select
+                            name="institution"
+                            [(ngModel)]="institution"
+                            #institutionModel="ngModel"
+                            required
+                            [disabled]="isSubmitting"
+                        >
+                            @for (option of institutionOptions; track option.value) {
+                                <mat-option [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        <mat-icon matPrefix>school</mat-icon>
+                        @if (hasFieldError('institution', 'required')) {
+                            <mat-error>La institución es requerida</mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Status -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Estado</mat-label>
+                        <mat-select
+                            name="statusId"
+                            [(ngModel)]="statusId"
+                            #statusModel="ngModel"
+                            required
+                            [disabled]="isSubmitting"
+                        >
+                            @for (option of statusOptions; track option.value) {
+                                <mat-option [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            }
+                        </mat-select>
+                        <mat-icon matPrefix>flag</mat-icon>
+                        @if (hasFieldError('statusId', 'required')) {
+                            <mat-error>El estado es requerido</mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Survey URL -->
+                    <mat-form-field class="w-full">
+                        <mat-label>URL de Encuesta (Google Forms)</mat-label>
+                        <input
+                            id="surveyUrl"
+                            name="surveyUrl"
+                            matInput
+                            [(ngModel)]="surveyUrl"
+                            #surveyUrlModel="ngModel"
+                            required
+                            [attr.maxlength]="URL_MAX_CHARS"
+                            placeholder="https://forms.google.com/..."
+                            type="url"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-icon matPrefix>assignment</mat-icon>
+                        <mat-hint>
+                            Enlace a Google Forms de la encuesta
+                            @if (surveyUrl && isValidUrl(surveyUrl)) {
+                                <a [href]="surveyUrl" target="_blank" class="ml-2 text-primary hover:underline">
+                                    Abrir enlace
+                                </a>
+                            }
+                        </mat-hint>
+                        @if (hasFieldError('surveyUrl', 'required')) {
+                            <mat-error>
+                                La URL de la encuesta es requerida
+                            </mat-error>
+                        }
+                        @if (surveyUrl && !isValidUrl(surveyUrl)) {
+                            <mat-error>
+                                Por favor ingrese una URL válida (debe comenzar con http:// o https://)
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Survey Deadline -->
+                    <mat-form-field class="w-full">
+                        <mat-label>Fecha Límite de la Encuesta</mat-label>
+                        <input
+                            id="surveyDeadline"
+                            name="surveyDeadline"
+                            matInput
+                            [matDatepicker]="surveyDeadlinePicker"
+                            [(ngModel)]="surveyDeadline"
+                            [min]="minDate"
+                            [required]="surveysMandatory"
+                            placeholder="Seleccione la fecha límite"
+                            [disabled]="isSubmitting"
+                        />
+                        <mat-datepicker-toggle
+                            matIconSuffix
+                            [for]="surveyDeadlinePicker"
+                            [disabled]="isSubmitting"
+                        ></mat-datepicker-toggle>
+                        <mat-datepicker #surveyDeadlinePicker [startAt]="minDate"></mat-datepicker>
+                        <mat-icon matPrefix>event</mat-icon>
+                        <mat-hint>
+                            Fecha límite en la que se debe llenar la encuesta
+                            @if (surveysMandatory) {
+                                <span class="text-warn">(Requerida cuando es obligatoria)</span>
+                            }
+                        </mat-hint>
+                        @if (surveysMandatory && hasFieldError('surveyDeadline', 'required')) {
+                            <mat-error>
+                                La fecha límite es requerida cuando la encuesta es obligatoria
+                            </mat-error>
+                        }
+                        @if (surveyDeadline && isPastDate(surveyDeadline)) {
+                            <mat-error>
+                                La fecha límite no puede ser anterior a hoy
+                            </mat-error>
+                        }
+                    </mat-form-field>
+
+                    <!-- Surveys Mandatory -->
+                    <div class="w-full">
+                        <mat-checkbox
+                            id="surveysMandatory"
+                            name="surveysMandatory"
+                            [(ngModel)]="surveysMandatory"
+                            [disabled]="isSubmitting"
+                            class="mb-2"
+                        >
+                            Encuesta obligatoria
+                        </mat-checkbox>
+                        <div class="text-xs text-secondary ml-8">
+                            Indica que la encuesta es obligatoria y llegada la fecha límite, no se permite continuar a menos que se realice la encuesta.
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end gap-4 pt-4">
+                        <button
+                            mat-stroked-button
+                            type="button"
+                            (click)="resetForm()"
+                            [disabled]="isSubmitting"
+                        >
+                            Limpiar
+                        </button>
+                        <button
+                            mat-flat-button
+                            type="submit"
+                            [color]="'primary'"
+                            [disabled]="isSubmitting || !isFormValid()"
+                        >
+                            @if (isSubmitting) {
+                                <mat-spinner
+                                    diameter="20"
+                                    class="inline-block mr-2"
+                                ></mat-spinner>
+                            }
+                            @if (isEditMode) {
+                                Guardar Cambios
+                            } @else {
+                                Registrar Encuesta
+                            }
+                        </button>
+                    </div>
+                </form>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>
+

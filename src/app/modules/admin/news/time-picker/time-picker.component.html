@@ -1,0 +1,79 @@
+<div class="relative w-full" clickOutside (clickOutside)="closePanel()">
+    <mat-form-field class="w-full" [subscriptSizing]="'dynamic'">
+        <mat-label>Hora</mat-label>
+        <input
+            matInput
+            [value]="getDisplayValue()"
+            [disabled]="disabled"
+            (click)="togglePanel()"
+            readonly
+            placeholder="--:--"
+        />
+        <mat-icon matPrefix>access_time</mat-icon>
+    </mat-form-field>
+
+    @if (isOpen) {
+        <div
+            class="absolute left-0 top-full z-50 mt-1 w-80 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800"
+        >
+            <div class="flex divide-x divide-gray-200 dark:divide-gray-700">
+                <!-- Hours Panel -->
+                <div class="flex-1 p-4">
+                    <div class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Hora
+                    </div>
+                    <div
+                        class="grid max-h-64 grid-cols-2 gap-1 overflow-y-auto"
+                    >
+                        @for (hour of hours; track hour) {
+                            <button
+                                type="button"
+                                class="flex h-10 items-center justify-center rounded text-sm font-medium transition-colors"
+                                [class.bg-primary-500]="isHourSelected(hour)"
+                                [class.text-white]="isHourSelected(hour)"
+                                [class.border]="isHourSelected(hour)"
+                                [class.border-black]="isHourSelected(hour)"
+                                [class.text-gray-700]="!isHourSelected(hour)"
+                                [class.dark:text-gray-300]="!isHourSelected(hour)"
+                                [class.hover:bg-gray-100]="!isHourSelected(hour)"
+                                [class.dark:hover:bg-gray-700]="!isHourSelected(hour)"
+                                (click)="selectHour(hour)"
+                            >
+                                {{ formatNumber(hour) }}
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Minutes Panel -->
+                <div class="flex-1 p-4">
+                    <div class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        Minuto
+                    </div>
+                    <div
+                        class="grid max-h-64 grid-cols-2 gap-1 overflow-y-auto"
+                    >
+                        @for (minute of minutes; track minute) {
+                            <button
+                                type="button"
+                                class="flex h-10 items-center justify-center rounded text-sm font-medium transition-colors"
+                                [class.bg-primary-500]="isMinuteSelected(minute)"
+                                [class.text-white]="isMinuteSelected(minute)"
+                                [class.border]="isMinuteSelected(minute)"
+                                [class.border-black]="isMinuteSelected(minute)"
+                                [class.text-gray-700]="!isMinuteSelected(minute)"
+                                [class.dark:text-gray-300]="!isMinuteSelected(minute)"
+                                [class.hover:bg-gray-100]="!isMinuteSelected(minute)"
+                                [class.dark:hover:bg-gray-700]="!isMinuteSelected(minute)"
+                                (click)="selectMinute(minute)"
+                            >
+                                {{ formatNumber(minute) }}
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+

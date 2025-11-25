@@ -1,0 +1,156 @@
+<div class="absolute inset-0 flex min-w-0 flex-col overflow-hidden">
+    <mat-drawer-container
+        class="bg-card h-full flex-auto dark:bg-transparent"
+        (backdropClick)="onBackdropClicked()"
+    >
+        <!-- Drawer -->
+        <mat-drawer
+            class="w-full dark:bg-gray-900 md:w-160"
+            [mode]="drawerMode"
+            [opened]="false"
+            [position]="'end'"
+            [disableClose]="true"
+            #matDrawer
+        >
+            <router-outlet></router-outlet>
+        </mat-drawer>
+
+        <mat-drawer-content class="flex flex-col">
+            <!-- Main -->
+            <div class="flex-auto">
+                <!-- Header -->
+                <div
+                    class="flex flex-auto flex-col justify-between border-b px-6 py-8 sm:flex-row md:flex-col md:px-8"
+                >
+                    <!-- Title -->
+                    <div>
+                        <div
+                            class="text-4xl font-extrabold leading-none tracking-tight"
+                        >
+                            Notificaciones
+                        </div>
+                        <div class="text-secondary ml-0.5 font-medium">
+                            @if (notificationsCount > 0) {
+                                {{ notificationsCount }}
+                            }
+                            {{
+                                notificationsCount
+                                    | i18nPlural
+                                        : {
+                                              '=0': 'No hay notificaciones',
+                                              '=1': 'notificación',
+                                              other: 'notificaciones',
+                                          }
+                            }}
+                        </div>
+                    </div>
+
+                    <!-- Main actions -->
+                    <div class="mt-4 flex items-center sm:mt-0 md:mt-4">
+                        <!-- Search -->
+                        <div class="flex-auto">
+                            <mat-form-field
+                                class="fuse-mat-dense fuse-mat-rounded w-full min-w-50"
+                                subscriptSizing="dynamic"
+                            >
+                                <mat-icon
+                                    class="icon-size-5"
+                                    matPrefix
+                                    [svgIcon]="
+                                        'heroicons_solid:magnifying-glass'
+                                    "
+                                ></mat-icon>
+                                <input
+                                    matInput
+                                    [formControl]="searchInputControl"
+                                    [autocomplete]="'off'"
+                                    [placeholder]="'Buscar notificaciones'"
+                                />
+                            </mat-form-field>
+                        </div>
+                        <!-- Add notification button -->
+                        <button
+                            class="ml-4"
+                            mat-flat-button
+                            [color]="'primary'"
+                            (click)="createNotification()"
+                        >
+                            <mat-icon
+                                [svgIcon]="'heroicons_outline:plus'"
+                            ></mat-icon>
+                            <span class="ml-2 mr-1">Agregar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Notifications list -->
+                <div class="relative">
+                    @if (notifications$ | async; as notifications) {
+                        @if (notifications.length) {
+                            @for (
+                                notification of notifications;
+                                track trackByFn($index, notification);
+                                let i = $index
+                            ) {
+                                <!-- Group -->
+                                @if (
+                                    i === 0 ||
+                                    notification.title.charAt(0) !==
+                                        notifications[i - 1].title.charAt(0)
+                                ) {
+                                    <div
+                                        class="text-secondary sticky top-0 z-10 -mt-px border-b border-t bg-gray-50 px-6 py-1 font-medium uppercase dark:bg-gray-900 md:px-8"
+                                    >
+                                        {{ notification.title.charAt(0) }}
+                                    </div>
+                                }
+                                <!-- Notification -->
+                                <a
+                                    class="z-20 flex cursor-pointer items-center border-b px-6 py-4 md:px-8"
+                                    [ngClass]="{
+                                        'dark:hover:bg-hover hover:bg-gray-100':
+                                            !selectedNotification ||
+                                            selectedNotification.id !== notification.id,
+                                        'bg-primary-50 dark:bg-hover':
+                                            selectedNotification &&
+                                            selectedNotification.id === notification.id,
+                                    }"
+                                    [routerLink]="['./', notification.id]"
+                                >
+                                    <div
+                                        class="flex h-10 w-10 flex-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-lg uppercase text-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                    >
+                                        {{ notification.title.charAt(0) }}
+                                    </div>
+                                    <div class="ml-4 min-w-0">
+                                        <div
+                                            class="truncate font-medium leading-5"
+                                        >
+                                            {{ notification.title }}
+                                        </div>
+                                        <div
+                                            class="text-secondary truncate leading-5"
+                                        >
+                                            {{ getInstitutionLabel(notification.institution) }} • {{ getStatusLabel(notification.statusId) }}
+                                        </div>
+                                    </div>
+                                </a>
+                            }
+                        } @else {
+                            <div
+                                class="border-t p-8 text-center text-4xl font-semibold tracking-tight sm:p-16"
+                            >
+                                No hay notificaciones!
+                            </div>
+                        }
+                    }
+
+                    <!-- No notifications -->
+                </div>
+            </div>
+        </mat-drawer-content>
+    </mat-drawer-container>
+</div>
+
+
+
