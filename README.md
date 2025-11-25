@@ -38,14 +38,6 @@ El sistema cuenta con tres módulos fundamentales:
 * **Estilos:** SCSS / CSS
 * **Gestión de Paquetes:** NPM
 
-## 📸 Capturas de Pantalla
-
-*(Reemplaza esta sección con imágenes reales de tu proyecto)*
-
-| Noticias | Encuestas |
-|:---:|:---:|
-| ![Vista Noticias](url-imagen-noticias) | ![Vista Encuestas](url-imagen-encuestas) |
-
 ## 🚀 Instalación y Configuración
 
 Sigue estos pasos para correr el proyecto localmente:
